@@ -10,15 +10,23 @@ export interface Group {
   memberCount?: number;
 }
 
-
-
-
 @Injectable()
 export class VoiptechGoogleApiService {
   public retGroups: Group[] = [];
+  public retMembersGroup: string[] = [];
 
-  public constructor(private gapiAuthService: GoogleAuthService, private gapiService: GoogleApiService){
+  public constructor(){
   }
+
+  public getGroupMembers(resourceName: string, maxMembers: number= 100000): string[]{
+    gapi.client.request({
+      'path': 'https://people.googleapis.com/v1/' + resourceName + '?maxMembers=' + maxMembers
+    }).then((res) => {
+      this.retMembersGroup = res.result.memberResourceNames;
+    });
+    return this.retMembersGroup;
+  }
+
 
   public getGroups(): Group[] {
     gapi.client.request({
@@ -32,9 +40,10 @@ export class VoiptechGoogleApiService {
         formattedName: group.formattedName,
         memberCount: group.memberCount || 0
       }));
-      console.log(this.retGroups);
     });
-    console.log(this.retGroups);
     return this.retGroups;
   }
+
+
+
 }

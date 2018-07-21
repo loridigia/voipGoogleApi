@@ -11,7 +11,7 @@ import {VoiptechGoogleApiService} from '../../services/voiptechGoogleApi.service
   selector: 'app-contacts-list',
   providers: [VoiptechGoogleApiService],
   template: `
-    <a *ngIf="loaded" (click)="getGroups()">Caricato, vai di test</a>
+    <a *ngIf="loaded" (click)="this.getGroupMembers('contactGroups/all')">Caricato, vai di test</a>
     <div *ngIf="this.groups != []"> {{ this.groups}}</div>
 
   `
@@ -50,7 +50,11 @@ export class ListComponent implements OnInit {
   public getGroups(){
     this.groups = this.vGapi.getGroups();
     console.log(this.groups);
-    this.zone.run(() => this.loaded = true);
+  }
+
+  public getGroupMembers(resourceName: string, maxMembers: number= 100000){
+    const groupMembers = this.vGapi.getGroupMembers(resourceName, maxMembers);
+    console.log(groupMembers);
   }
 
   public testLoad() {
