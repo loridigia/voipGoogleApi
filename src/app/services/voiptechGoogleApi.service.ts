@@ -12,25 +12,44 @@ export interface Group {
 
 @Injectable()
 export class VoiptechGoogleApiService {
-  public retGroups: Group[] = [];
-  public retMembersGroup: string[] = [];
+  private baseUrl = 'https://people.googleapis.com/v1/';
+  private personField = [
+    'names',
+    'nicknames',
+    'ageRanges',
+    'birthdays',
+    'emailAddresses',
+    'phoneNumbers',
+    'organizations',
+  ];
+  private retGroups: Group[] = [];
+  private retArray: any[] = []
 
   public constructor(){
   }
 
+  public getMemberInfo(memberId: string){
+    gapi.client.request({
+      'path': this.baseUrl + memberId + '?personFields=' + this.personField.toString()
+    }).then((res) => {
+      this.retArray = res.result;
+    });
+    return this.retArray;
+  }
+
   public getGroupMembers(resourceName: string, maxMembers: number= 100000): string[]{
     gapi.client.request({
-      'path': 'https://people.googleapis.com/v1/' + resourceName + '?maxMembers=' + maxMembers
+      'path': this.baseUrl + resourceName + '?maxMembers=' + maxMembers
     }).then((res) => {
-      this.retMembersGroup = res.result.memberResourceNames;
+      this.retArray = res.result.memberResourceNames;
     });
-    return this.retMembersGroup;
+    return this.retArray;
   }
 
 
   public getGroups(): Group[] {
     gapi.client.request({
-      'path': 'https://people.googleapis.com/v1/contactGroups'
+      'path': this.baseUrl + 'contactGroups'
     }).then((res) => {
       const groups: any[] = res.result.contactGroups ;
       this.retGroups = groups.map(group => ({
