@@ -1,6 +1,6 @@
-import {Injectable, Injector} from '@angular/core';
-import GoogleAuth = gapi.auth2.GoogleAuth;
-import {GoogleApiService, GoogleAuthService} from 'ng-gapi';
+import {Injectable} from '@angular/core';
+
+
 
 export interface Group {
   resourceName: string;
@@ -12,8 +12,11 @@ export interface Group {
 
 @Injectable()
 export class VoiptechGoogleApiService {
+
   private baseUrl = 'https://people.googleapis.com/v1/';
-  private personField = [
+  private retGroups: Group[] = [];
+  private retArray: any[] = [];
+  private personFields = [
     'names',
     'nicknames',
     'ageRanges',
@@ -22,22 +25,43 @@ export class VoiptechGoogleApiService {
     'phoneNumbers',
     'organizations',
   ];
-  private retGroups: Group[] = [];
-  private retArray: any[] = []
 
-  public constructor(){
+  public constructor() {}
+
+
+  // ritorna array di oggetti persona con i campi ( se settati ) personFields
+
+  public getGroupMembersInfo(resourceName: string , maxMembers: number= 50): any[]{
+    const membersId = this.getGroupMembers(resourceName, maxMembers);
+    let idCustom = '';
+    for (const client of membersId)
+      idCustom += 'resourceNames=' + client + '&';
+
+    gapi.client.request({
+      'path': this.baseUrl + 'people:batchGet?' + idCustom + 'personFields=' + this.personFields.toString()
+    }).then((res) => {
+      console.log(res.result);
+      this.retArray = res.result;
+    });
+    return this.retArray;
   }
 
-  public getMemberInfo(memberId: string){
+
+  // ritorna un oggetto con i campi ( se settati ) personFields
+
+  public getPersonInfo(personId: string): any[]{
     gapi.client.request({
-      'path': this.baseUrl + memberId + '?personFields=' + this.personField.toString()
+      'path': this.baseUrl + personId + '?personFields=' + this.personFields.toString()
     }).then((res) => {
       this.retArray = res.result;
     });
     return this.retArray;
   }
 
-  public getGroupMembers(resourceName: string, maxMembers: number= 100000): string[]{
+
+  // ritorna array di memberId, uno per ogni membro del gruppo in input
+
+  public getGroupMembers(resourceName: string, maxMembers: number= 100000): any[]{
     gapi.client.request({
       'path': this.baseUrl + resourceName + '?maxMembers=' + maxMembers
     }).then((res) => {
@@ -47,21 +71,22 @@ export class VoiptechGoogleApiService {
   }
 
 
-  public getGroups(): Group[] {
-    gapi.client.request({
-      'path': this.baseUrl + 'contactGroups'
-    }).then((res) => {
-      const groups: any[] = res.result.contactGroups ;
-      this.retGroups = groups.map(group => ({
-        resourceName: group.resourceName,
-        type: group.groupType,
-        name: group.name,
-        formattedName: group.formattedName,
-        memberCount: group.memberCount || 0
-      }));
-    });
+  // ritorna un array di oggetti di tipo Group
+
+  public getGroups(): any {
+      gapi.client.request({
+        'path': this.baseUrl + 'contactGroups'
+      }).then((res) => {
+        this.retGroups = res.result.contactGroups.map(group => ({
+          resourceName: group.resourceName,
+          type: group.groupType,
+          name: group.name,
+          formattedName: group.formattedName,
+          memberCount: group.memberCount || 0
+        }));
+      });
     return this.retGroups;
-  }
+    }
 
 
 
